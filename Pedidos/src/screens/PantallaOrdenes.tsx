@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Orden } from '../types/pedido';
 import { TarjetaOrden } from '../components/TarjetaPedido';
@@ -27,7 +28,7 @@ const OPCIONES_FILTRO: { clave: FiltroEstado; etiqueta: string }[] = [
 ];
 
 export default function PantallaOrdenes() {
-  const { ordenes, cargando, error, recargar } = useOrdenes();
+  const { ordenes, cargando, refrescando, error, recargar } = useOrdenes();
   const [busqueda, setBusqueda] = useState('');
   const [filtroActivo, setFiltroActivo] = useState<FiltroEstado>('Todos');
 
@@ -73,7 +74,7 @@ export default function PantallaOrdenes() {
     );
   }
 
-  if (error) {
+  if (error && ordenes.length === 0) {
     return (
       <SafeAreaView style={estilos.areaSegura} edges={['top']}>
         <StatusBar style="dark" />
@@ -93,7 +94,11 @@ export default function PantallaOrdenes() {
     <View style={estilos.contenedorVacio}>
       <Text style={estilos.iconoVacio}>📦</Text>
       <Text style={estilos.tituloVacio}>Sin órdenes</Text>
-      <Text style={estilos.subtituloVacio}>No se encontraron órdenes con ese criterio.</Text>
+      <Text style={estilos.subtituloVacio}>
+        {ordenes.length === 0
+          ? 'Aún no hay pedidos. Crea el primero con el botón de abajo.'
+          : 'No se encontraron órdenes con ese criterio.'}
+      </Text>
     </View>
   );
 
@@ -106,7 +111,8 @@ export default function PantallaOrdenes() {
         <View>
           <Text style={estilos.tituloEncabezado}>Órdenes</Text>
           <Text style={estilos.subtituloEncabezado}>
-            {ordenesFiltradas.length} orden{ordenesFiltradas.length !== 1 ? 'es' : ''} registrada{ordenesFiltradas.length !== 1 ? 's' : ''}
+            {ordenesFiltradas.length}{' '}
+            {ordenesFiltradas.length === 1 ? 'orden registrada' : 'órdenes registradas'}
           </Text>
         </View>
         <View style={estilos.cajaTotal}>
@@ -173,6 +179,12 @@ export default function PantallaOrdenes() {
         })}
       </ScrollView>
 
+      {error && (
+        <TouchableOpacity style={estilos.avisoError} onPress={recargar}>
+          <Text style={estilos.textoAvisoError}>{error} Toca para reintentar.</Text>
+        </TouchableOpacity>
+      )}
+
       {/* ── Listado de Órdenes ── */}
       <FlatList
         data={ordenesFiltradas}
@@ -180,13 +192,20 @@ export default function PantallaOrdenes() {
         renderItem={({ item }) => <TarjetaOrden orden={item} />}
         ListEmptyComponent={renderizarVacio}
         onRefresh={recargar}
-        refreshing={cargando}
+        refreshing={refrescando}
         contentContainerStyle={[
           estilos.contenidoLista,
           ordenesFiltradas.length === 0 && estilos.contenidoListaVacia,
         ]}
         showsVerticalScrollIndicator={false}
       />
+
+      {/* ── Botón para crear un pedido ── */}
+      <Link href="/crearPedidos" asChild>
+        <TouchableOpacity style={estilos.botonNuevo} activeOpacity={0.85} accessibilityLabel="Crear pedido">
+          <Text style={estilos.textoBotonNuevo}>＋ Nuevo pedido</Text>
+        </TouchableOpacity>
+      </Link>
     </SafeAreaView>
   );
 }
@@ -287,7 +306,30 @@ const estilos = StyleSheet.create({
   },
   puntoChip: { width: 6, height: 6, borderRadius: 3 },
   textoChip: { fontSize: 13, color: '#64748B', fontWeight: '600' },
-  contenidoLista: { paddingBottom: 24, paddingTop: 4 },
+  contenidoLista: { paddingBottom: 100, paddingTop: 4 },
+  avisoError: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#FFEBEE',
+  },
+  textoAvisoError: { color: '#B71C1C', fontSize: 13 },
+  botonNuevo: {
+    position: 'absolute',
+    right: 20,
+    bottom: 28,
+    backgroundColor: '#0284C7',
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    borderRadius: 28,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  textoBotonNuevo: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   contenidoListaVacia: { flexGrow: 1 },
   contenedorVacio: {
     flex: 1,

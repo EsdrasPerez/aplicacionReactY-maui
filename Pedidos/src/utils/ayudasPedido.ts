@@ -1,4 +1,5 @@
 import type { EstadoOrden } from '../types/pedido';
+import { moneda } from './formato';
 
 export interface ConfigEstado {
   etiqueta: string;
@@ -38,16 +39,14 @@ export function obtenerConfigEstado(estado: EstadoOrden): ConfigEstado {
   };
 }
 
-export function formatearMoneda(monto: number): string {
-  const valor = Number(monto) || 0;
-  return `$${valor.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
+/** Monto en quetzales (Q1,234.50) */
+export const formatearMoneda = moneda;
 
 export function formatearFecha(isoString?: string): string {
   if (!isoString) return 'Sin fecha';
   const fecha = new Date(isoString);
   if (isNaN(fecha.getTime())) return isoString;
-  return fecha.toLocaleDateString('es-MX', {
+  return fecha.toLocaleDateString('es-GT', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
